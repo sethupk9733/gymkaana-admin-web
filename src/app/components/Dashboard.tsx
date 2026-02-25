@@ -1,5 +1,6 @@
 import { Bell, Users, Activity, DollarSign, Clock, Plus, TrendingUp, Eye, Building, QrCode, IndianRupee } from "lucide-react";
 import { useEffect, useState } from "react";
+import { API_URL } from "../config/api";
 
 interface DashboardProps {
   onNavigateToNotifications: () => void;
@@ -16,7 +17,7 @@ export function Dashboard({ onNavigateToNotifications, onNavigateToPayouts, onNa
     const fetchDashboardStats = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5000/api/dashboard/stats', {
+        const response = await fetch(`${API_URL}/dashboard/stats`, {
           headers: {
             'Content-Type': 'application/json'
           },
