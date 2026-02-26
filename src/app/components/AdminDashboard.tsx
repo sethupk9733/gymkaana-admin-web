@@ -1,7 +1,6 @@
-import { TrendingUp, Users, Building2, AlertCircle, DollarSign, ArrowUpRight, ArrowDownRight, Activity, Calendar, MoreVertical, Ban, MoreHorizontal, Search, Info, Target, MousePointer2, BarChart3, PieChart, LineChart, Inbox, HelpCircle, Briefcase, Zap, Globe, CheckSquare, Landmark, Shield } from "lucide-react";
+import { TrendingUp, Users, Building2, AlertCircle, DollarSign, ArrowUpRight, ArrowDownRight, Activity, Calendar, MoreVertical, Ban, MoreHorizontal, Search, Info, Target, MousePointer2, BarChart3, PieChart, LineChart, Inbox, HelpCircle, Briefcase, Zap, Globe, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { useState, useEffect } from "react";
-import { fetchDashboardStats } from "../lib/api";
+import { useState } from "react";
 
 interface GymMetric {
     id: string;
@@ -19,73 +18,22 @@ interface GymMetric {
     yieldPerMember: string;
 }
 
-export function AdminDashboard({ onTabChange }: { onTabChange?: (tab: string) => void }) {
+export function AdminDashboard() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedPerfGym, setSelectedPerfGym] = useState<GymMetric | null>(null);
-    const [selectedOwner, setSelectedOwner] = useState<any>(null);
-    const [activeView, setActiveView] = useState<'performance' | 'insights' | 'economics' | 'market_analysis' | 'owners'>('performance');
+    const [activeView, setActiveView] = useState<'performance' | 'insights' | 'economics' | 'market_analysis'>('performance');
 
-    const [stats, setStats] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const loadStats = async (ownerId?: string) => {
-        setLoading(true);
-        setError(null);
-        try {
-            console.log('📊 AdminDashboard: Loading stats for owner:', ownerId);
-            const data = await fetchDashboardStats(ownerId);
-            console.log('📊 AdminDashboard: Stats loaded successfully:', data);
-            setStats(data);
-        } catch (err) {
-            const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-            console.error("❌ AdminDashboard: Failed to load dashboard stats:", errorMsg);
-            setError(errorMsg);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Load stats on component mount
-    useEffect(() => {
-        console.log('📊 AdminDashboard: Component mounted, loading initial stats');
-        loadStats();
-    }, []);
-
-    // Load stats when selectedOwner changes
-    useEffect(() => {
-        if (selectedOwner) {
-            console.log('📊 AdminDashboard: Selected owner changed, loading owner-specific stats');
-            loadStats(selectedOwner._id);
-        }
-    }, [selectedOwner]);
-
-    const gymsPerformance: GymMetric[] = stats?.gymPerformance?.map((g: any, i: number) => ({
-        id: g._id,
-        name: g.name,
-        logo: g.name?.charAt(0) || 'G',
-        revenue: `₹${(g.revenue || 0).toLocaleString()}`,
-        platformIncome: `₹${((g.revenue || 0) * 0.15).toLocaleString()}`,
-        contributionScore: stats.totalRevenue > 0 ? Math.round(((g.revenue || 0) / stats.totalRevenue) * 100) : 0,
-        growth: "+0%", // Placeholder as backend doesn't track historic delta yet
-        members: g.members || 0,
-        retention: "85%", // Placeholder
-        status: (g.revenue || 0) > 10000 ? "High" : "Solid",
-        dailyActive: Math.round((g.members || 0) * 0.3),
-        marketCategory: i % 2 === 0 ? 'Premium' : 'Boutique',
-        yieldPerMember: g.members > 0 ? `₹${Math.round((g.revenue || 0) / g.members)}` : "₹0"
-    })) || [];
-
-    const ownersPerformance = stats?.ownerPerformance || [];
+    const gymsPerformance: GymMetric[] = [
+        { id: "gym1", name: "PowerHouse Fitness", logo: "P", revenue: "₹3,82,000", platformIncome: "₹57,300", contributionScore: 28, growth: "+15.4%", members: 420, retention: "88%", status: "High", dailyActive: 156, marketCategory: 'Premium', yieldPerMember: "₹910" },
+        { id: "gym2", name: "Elite CrossFit", logo: "E", revenue: "₹95,000", platformIncome: "₹14,250", contributionScore: 7, growth: "-2.1%", members: 156, retention: "65%", status: "Critical", dailyActive: 42, marketCategory: 'Boutique', yieldPerMember: "₹610" },
+        { id: "gym3", name: "Yoga Zen Center", logo: "Y", revenue: "₹1,50,000", platformIncome: "₹22,500", contributionScore: 11, growth: "+8.7%", members: 210, retention: "72%", status: "Solid", dailyActive: 89, marketCategory: 'Boutique', yieldPerMember: "₹714" },
+        { id: "gym4", name: "Iron Pump Gym", logo: "I", revenue: "₹5,12,000", platformIncome: "₹76,800", contributionScore: 37, growth: "+22.5%", members: 580, retention: "92%", status: "High", dailyActive: 310, marketCategory: 'Premium', yieldPerMember: "₹882" },
+        { id: "gym5", name: "Muscle Factory", logo: "M", revenue: "₹2,10,000", platformIncome: "₹31,500", contributionScore: 17, growth: "+5.5%", members: 310, retention: "80%", status: "Solid", dailyActive: 120, marketCategory: 'Budget', yieldPerMember: "₹677" },
+    ];
 
     const filteredGyms = gymsPerformance.filter(g =>
         g.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-
-    const formatLakhs = (amt: number) => {
-        if (amt >= 100000) return `₹${(amt / 100000).toFixed(2)}L`;
-        return `₹${amt.toLocaleString()}`;
-    };
 
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-12 pb-20 font-sans">
@@ -104,47 +52,10 @@ export function AdminDashboard({ onTabChange }: { onTabChange?: (tab: string) =>
 
                 <div className="flex bg-white p-2 rounded-[24px] border border-gray-100 shadow-sm gap-2">
                     <TabButton active={activeView === 'performance'} onClick={() => setActiveView('performance')} label="Yield Analysis" icon={TrendingUp} />
-                    <TabButton active={activeView === 'owners'} onClick={() => setActiveView('owners')} label="Owner Network" icon={Users} />
                     <TabButton active={activeView === 'insights'} onClick={() => setActiveView('insights')} label="Market Research" icon={Globe} />
-                    <TabButton active={activeView === 'economics'} onClick={() => setActiveView('economics')} label="Economics" icon={Landmark} />
+                    <TabButton active={activeView === 'economics'} onClick={() => setActiveView('economics')} label="Network Economics" icon={Landmark} />
                 </div>
             </header>
-
-            {loading && (
-                <div className="p-6 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg">
-                    Loading dashboard data...
-                </div>
-            )}
-
-            {error && (
-                <div className="p-6 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-                    Error: {error}
-                </div>
-            )}
-
-            {selectedOwner && (
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-6 bg-primary/10 border-2 border-primary rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-primary/5"
-                >
-                    <div className="flex items-center gap-6">
-                        <div className="p-4 bg-black text-primary rounded-2xl shadow-lg">
-                            <Shield className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-black italic uppercase tracking-tighter text-gray-900 leading-none mb-1">AUDIT MODE ACTIVE</h3>
-                            <p className="text-[10px] font-black text-primary uppercase tracking-widest">ISOLATING DATA FOR: <span className="text-black">{selectedOwner.name}</span></p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => setSelectedOwner(null)}
-                        className="px-10 py-4 bg-black text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 transition-all"
-                    >
-                        CLEAR SESSION & RESET
-                    </button>
-                </motion.div>
-            )}
 
             {/* EDUCATIONAL TOP BAR FOR NEWCOMERS */}
             <div className="bg-primary/5 border border-primary/20 rounded-[40px] p-8 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
@@ -168,51 +79,11 @@ export function AdminDashboard({ onTabChange }: { onTabChange?: (tab: string) =>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
                     {/* PLATFORM WIDE STATS - DETAILED */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                        <YieldCard
-                            label="Total Network GMV"
-                            value={formatLakhs(stats?.totalRevenue || 0)}
-                            sub="Gross flow through platform"
-                            icon={Inbox}
-                            color="black"
-                            help="Combined revenue of all gyms"
-                            onClick={() => onTabChange?.('bookings')}
-                        />
-                        <YieldCard
-                            label="Gymkaana Income"
-                            value={formatLakhs(stats?.platformIncome || 0)}
-                            sub="15% Transactional Yield"
-                            icon={Target}
-                            color="primary"
-                            help="Our net platform revenue"
-                            onClick={() => onTabChange?.('refunds')}
-                        />
-                        <YieldCard
-                            label="Pending Onboarding"
-                            value={stats?.pendingOnboarding?.toString().padStart(2, '0') || "00"}
-                            sub="Vetting Requests"
-                            icon={CheckSquare}
-                            color="red"
-                            help="New gyms awaiting verification"
-                            onClick={() => onTabChange?.('partners')}
-                        />
-                        <YieldCard
-                            label="Active User Reach"
-                            value={(stats?.activeMembers || 0).toLocaleString()}
-                            sub="Individual monthly visits"
-                            icon={Users}
-                            color="emerald"
-                            help="Total reach across all hubs"
-                            onClick={() => onTabChange?.('users')}
-                        />
-                        <YieldCard
-                            label="Yield per Member"
-                            value={`₹${Math.round((stats?.totalRevenue || 0) / (stats?.activeMembers || 1))}`}
-                            sub="Avg. contribution/user"
-                            icon={Zap}
-                            color="orange"
-                            help="Revenue health per customer"
-                            onClick={() => setActiveView('insights')}
-                        />
+                        <YieldCard label="Total Network GMV" value="₹44.82L" sub="Gross flow through platform" icon={Inbox} color="black" help="Combined revenue of all gyms" />
+                        <YieldCard label="Gymkaana Income" value="₹6.72L" sub="15% Transactional Yield" icon={Target} color="primary" help="Our net platform revenue" />
+                        <YieldCard label="Pending Onboarding" value="08" sub="Vetting Requests" icon={CheckSquare} color="red" help="New gyms awaiting verification" />
+                        <YieldCard label="Active User Reach" value="12,450" sub="Individual monthly visits" icon={Users} color="emerald" help="Total reach across all hubs" />
+                        <YieldCard label="Yield per Member" value="₹892" sub="Avg. contribution/user" icon={Zap} color="orange" help="Revenue health per customer" />
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -306,49 +177,6 @@ export function AdminDashboard({ onTabChange }: { onTabChange?: (tab: string) =>
                 </motion.div>
             )}
 
-            {/* OWNER NETWORK VIEW */}
-            {activeView === 'owners' && (
-                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-12">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {ownersPerformance.map((owner: any) => (
-                            <div key={owner._id} className="bg-white border-2 border-gray-50 rounded-[48px] p-10 hover:border-black transition-all shadow-sm group">
-                                <div className="flex items-center gap-6 mb-8">
-                                    <div className="w-16 h-16 bg-gray-900 text-primary rounded-3xl flex items-center justify-center font-black italic text-xl shadow-xl group-hover:-rotate-6 transition-all">
-                                        {owner.name.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-black italic uppercase tracking-tighter text-gray-900">{owner.name}</h3>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{owner.email}</p>
-                                    </div>
-                                </div>
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">
-                                        <span>Assets Managed</span>
-                                        <span className="text-black">{owner.gymCount} Hubs</span>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {owner.gyms.map((gym: string, i: number) => (
-                                            <span key={i} className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-600">
-                                                {gym}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        setSelectedOwner(owner);
-                                        setActiveView('performance');
-                                    }}
-                                    className="w-full mt-10 py-5 bg-gray-900 text-white rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all"
-                                >
-                                    Audit Owner Profile
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </motion.div>
-            )}
-
             {/* MARKET RESEARCH VIEW */}
             {activeView === 'insights' && (
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-12">
@@ -359,14 +187,14 @@ export function AdminDashboard({ onTabChange }: { onTabChange?: (tab: string) =>
                                 <div className="relative z-10">
                                     <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-8">Hub Demand Forecasting</h3>
                                     <div className="flex items-end justify-between h-48 gap-4 px-2 mb-8">
-                                        {(gymsPerformance.slice(0, 10)).map((gym, i) => (
+                                        {[65, 40, 85, 95, 60, 70, 80, 55, 90, 75].map((h, i) => (
                                             <div key={i} className="flex-1 bg-white/10 rounded-t-xl relative group">
                                                 <motion.div
                                                     initial={{ height: 0 }}
-                                                    animate={{ height: `${Math.min((gym.members / (stats?.activeMembers || 1)) * 100 + 10, 100)}%` }}
+                                                    animate={{ height: `${h}%` }}
                                                     className="w-full bg-primary rounded-t-xl"
                                                 />
-                                                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[8px] font-black text-white/40">{gym.name.slice(0, 3)}</div>
+                                                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[8px] font-black text-white/40">MAR 0{i + 1}</div>
                                             </div>
                                         ))}
                                     </div>
@@ -375,18 +203,18 @@ export function AdminDashboard({ onTabChange }: { onTabChange?: (tab: string) =>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <ResearchStat label="Network Scale" value={stats?.totalGyms || "0"} sub="Total Managed Hubs" icon={Target} />
-                                <ResearchStat label="Booking Velocity" value={stats?.totalBookingCount || "0"} sub="Total Lifetime Passes" icon={Zap} />
+                                <ResearchStat label="Regional Dominance" value="84%" sub="Bangalore Central Hub" icon={Target} />
+                                <ResearchStat label="Avg. Order Surge" value="+18%" sub="Weekend Pass Velocity" icon={Zap} />
                             </div>
                         </div>
 
                         <div className="bg-white border border-gray-100 rounded-[48px] p-10 shadow-sm">
                             <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-8 px-2">Competitive Tiering Analysis</h4>
                             <div className="space-y-6">
-                                <TierRow label="Premium Hubs" count={gymsPerformance.filter(g => g.marketCategory === 'Premium').length} growth="+5%" impact={42} color="bg-purple-500" />
-                                <TierRow label="Boutique Studios" count={gymsPerformance.filter(g => g.marketCategory === 'Boutique').length} growth="+12%" impact={28} color="bg-blue-500" />
-                                <TierRow label="Active Hubs" count={stats?.totalGyms || 0} growth="+8%" impact={30} color="bg-gray-900" />
-                                <TierRow label="Pending Vetting" count={stats?.pendingOnboarding || 0} growth="+18%" impact={15} color="bg-emerald-500" />
+                                <TierRow label="Premium Hubs" count={12} growth="+5%" impact={42} color="bg-purple-500" />
+                                <TierRow label="Boutique Studios" count={8} growth="+12%" impact={28} color="bg-blue-500" />
+                                <TierRow label="Budget Mass" count={15} growth="-2%" impact={30} color="bg-gray-900" />
+                                <TierRow label="Yoga & Wellness" count={6} growth="+18%" impact={15} color="bg-emerald-500" />
                             </div>
                             <button
                                 onClick={() => setActiveView('market_analysis')}
@@ -403,9 +231,9 @@ export function AdminDashboard({ onTabChange }: { onTabChange?: (tab: string) =>
             {activeView === 'economics' && (
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-12">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <YieldCard label="Collective Revenue" value={formatLakhs(stats?.totalRevenue || 0)} sub={`Growth: ${stats?.revenueTrend || "+0%"}`} icon={DollarSign} color="emerald" help="Aggregated GMV from all active bookings" />
-                        <YieldCard label="Net Platform Yield" value={formatLakhs(stats?.platformIncome || 0)} sub="Transactional Revenue (15%)" icon={TrendingUp} color="emerald" help="Projected 15% revenue" />
-                        <YieldCard label="Network Liability" value={formatLakhs((stats?.totalRevenue || 0) * 0.85)} sub="Awaiting Partner Payout" icon={AlertCircle} color="orange" help="Total outstanding to gyms" />
+                        <YieldCard label="Platform Reserve" value="₹1.24Cr" sub="Liquidity Pool Balance" icon={Inbox} color="black" help="Platform's treasury for gym payouts" />
+                        <YieldCard label="Net Yield Projection" value="₹18.5L" sub="Expected Next Month" icon={TrendingUp} color="emerald" help="Projected 15% revenue" />
+                        <YieldCard label="Network Liability" value="₹42.1L" sub="Awaiting Partner Payout" icon={AlertCircle} color="orange" help="Total outstanding to gyms" />
                     </div>
 
                     <div className="bg-white border border-gray-100 rounded-[48px] p-10 shadow-sm">
@@ -418,35 +246,36 @@ export function AdminDashboard({ onTabChange }: { onTabChange?: (tab: string) =>
                         </div>
 
                         <div className="space-y-4">
-                            {gymsPerformance.slice(0, 5).map((gym, i) => {
-                                const rawRevenue = parseInt(gym.revenue.replace(/[^0-9]/g, '')) || 0;
-                                return (
-                                    <div key={i} className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-gray-100 hover:border-primary/20 transition-all">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center font-black italic text-xs">{gym.logo}</div>
-                                            <div>
-                                                <p className="font-black text-sm uppercase italic">{gym.name}</p>
-                                                <p className="text-[9px] font-bold text-gray-400 uppercase">Gross: {gym.revenue}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-12 text-right">
-                                            <div>
-                                                <p className="text-[8px] font-black text-gray-400 uppercase">Partner Payout (85%)</p>
-                                                <p className="text-sm font-black italic">₹{(rawRevenue * 0.85).toLocaleString()}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[8px] font-black text-gray-400 uppercase">Platform Yield (15%)</p>
-                                                <p className="text-sm font-black italic text-primary">₹{(rawRevenue * 0.15).toLocaleString()}</p>
-                                            </div>
-                                            <div className="w-24">
-                                                <span className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${rawRevenue > 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>
-                                                    {rawRevenue > 0 ? 'Verified' : 'Pending'}
-                                                </span>
-                                            </div>
+                            {[
+                                { name: "PowerHouse", revenue: "₹3.82L", payout: "₹3.24L", tax: "₹19k", status: "Processed" },
+                                { name: "Iron Pump", revenue: "₹5.12L", payout: "₹4.35L", tax: "₹25k", status: "Pending" },
+                                { name: "Yoga Zen", revenue: "₹1.50L", payout: "₹1.27L", tax: "₹7k", status: "Hold" },
+                            ].map((row, i) => (
+                                <div key={i} className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-gray-100 hover:border-primary/20 transition-all">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center font-black italic text-xs">{row.name[0]}</div>
+                                        <div>
+                                            <p className="font-black text-sm uppercase italic">{row.name}</p>
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase">Gross: {row.revenue}</p>
                                         </div>
                                     </div>
-                                );
-                            })}
+                                    <div className="flex gap-12 text-right">
+                                        <div>
+                                            <p className="text-[8px] font-black text-gray-400 uppercase">Partner Payout</p>
+                                            <p className="text-sm font-black italic">{row.payout}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[8px] font-black text-gray-400 uppercase">Platform Tax</p>
+                                            <p className="text-sm font-black italic text-primary">{row.tax}</p>
+                                        </div>
+                                        <div className="w-24">
+                                            <span className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${row.status === 'Processed' ? 'bg-emerald-100 text-emerald-600' :
+                                                row.status === 'Pending' ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600'
+                                                }`}>{row.status}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </motion.div>
@@ -475,9 +304,9 @@ export function AdminDashboard({ onTabChange }: { onTabChange?: (tab: string) =>
                     </header>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <ResearchStat label="Regional Dominance" value={stats?.research?.regionalDominance || "0%"} sub="Active Network Density" icon={Target} />
-                        <ResearchStat label="Avg. Order Surge" value={stats?.research?.orderSurge || "+0%"} sub="Network Velocity" icon={Zap} />
-                        <ResearchStat label="Churn Resistance" value={stats?.research?.churnResistance || "Solid"} sub="Client Stickiness" icon={Briefcase} />
+                        <ResearchStat label="Regional Dominance" value="84%" sub="Bangalore Central Hub" icon={Target} />
+                        <ResearchStat label="Avg. Order Surge" value="+18%" sub="Weekend Pass Velocity" icon={Zap} />
+                        <ResearchStat label="Churn Resistance" value="Low" sub="Institutional Stickiness" icon={Briefcase} />
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -502,10 +331,9 @@ export function AdminDashboard({ onTabChange }: { onTabChange?: (tab: string) =>
                         <div className="bg-white border border-gray-100 rounded-[56px] p-12 shadow-sm space-y-10">
                             <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Competitive Tiering Analysis</h4>
                             <div className="space-y-6">
-                                <TierRow label="Premium Outlets" count={stats?.tiers?.premium || 0} growth="+0%" impact={stats?.totalGyms > 0 ? Math.round((stats.tiers.premium / stats.totalGyms) * 100) : 0} color="bg-black" />
-                                <TierRow label="Active Hubs" count={stats?.tiers?.active || 0} growth="+0%" impact={stats?.totalGyms > 0 ? Math.round((stats.tiers.active / stats.totalGyms) * 100) : 0} color="bg-primary" />
-                                <TierRow label="Boutique Studios" count={stats?.tiers?.boutique || 0} growth="+0%" impact={stats?.totalGyms > 0 ? Math.round((stats.tiers.boutique / stats.totalGyms) * 100) : 0} color="bg-emerald-500" />
-                                <TierRow label="Value Centers" count={stats?.tiers?.value || 0} growth="+0%" impact={stats?.totalGyms > 0 ? Math.round((stats.tiers.value / stats.totalGyms) * 100) : 0} color="bg-blue-500" />
+                                <TierRow label="Premium Hubs" count={12} growth="+5%" impact={42} color="bg-purple-500" />
+                                <TierRow label="Boutique Studios" count={8} growth="+12%" impact={28} color="bg-blue-500" />
+                                <TierRow label="Budget Mass" count={15} growth="-2%" impact={30} color="bg-gray-900" />
                             </div>
                             <div className="pt-8 border-t border-gray-50 flex justify-between items-center px-4">
                                 <div>
@@ -700,15 +528,12 @@ function InsightPoint({ label, text }: { label: string, text: string }) {
     );
 }
 
-function YieldCard({ label, value, sub, icon: Icon, color, help, onClick }: any) {
-    const textColor = color === 'primary' ? 'text-primary' : color === 'emerald' ? 'text-emerald-500' : color === 'orange' ? 'text-orange-500' : color === 'red' ? 'text-red-500' : 'text-gray-900';
-    const bg = color === 'primary' ? 'bg-primary/10' : color === 'emerald' ? 'bg-emerald-50' : color === 'orange' ? 'bg-orange-50' : color === 'red' ? 'bg-red-50' : 'bg-gray-50';
+function YieldCard({ label, value, sub, icon: Icon, color, help }: any) {
+    const textColor = color === 'primary' ? 'text-primary' : color === 'emerald' ? 'text-emerald-500' : color === 'orange' ? 'text-orange-500' : 'text-gray-900';
+    const bg = color === 'primary' ? 'bg-primary/10' : color === 'emerald' ? 'bg-emerald-50' : color === 'orange' ? 'bg-orange-50' : 'bg-gray-50';
 
     return (
-        <div
-            onClick={onClick}
-            className="bg-white p-8 rounded-[40px] border border-gray-200 shadow-sm flex flex-col group hover:shadow-2xl hover:border-black transition-all relative overflow-hidden cursor-pointer"
-        >
+        <div className="bg-white p-8 rounded-[40px] border border-gray-200 shadow-sm flex flex-col group hover:shadow-2xl hover:border-black transition-all relative overflow-hidden">
             <div className="flex justify-between items-start mb-10">
                 <div className={`p-4 rounded-2xl ${bg} ${textColor} group-hover:bg-black group-hover:text-white transition-all`}>
                     <Icon className="w-6 h-6" />
@@ -788,4 +613,6 @@ function TierRow({ label, count, growth, impact, color }: any) {
     )
 }
 
-
+function Landmark({ className }: { className?: string }) {
+    return <Building2 className={className} />
+}

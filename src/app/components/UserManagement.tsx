@@ -1,14 +1,13 @@
 import { Search, MoreHorizontal, User, ShieldAlert, Mail, MapPin, Calendar, Ban, CheckCircle, CreditCard, ChevronRight, X, Activity, Dumbbell, Clock, MessageSquare, AlertCircle, TrendingUp } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { fetchUsers, fetchActivities, createAdmin } from "../lib/api";
 
 interface UserDetail {
-    id: string;
+    id: number;
     name: string;
     email: string;
     phone: string;
-    role: "Customer" | "Gym Owner" | "Admin";
+    role: "Customer" | "Gym Owner";
     status: "Active" | "Blocked" | "Pending";
     joined: string;
     location: string;
@@ -25,61 +24,71 @@ export function UserManagement() {
     const [selectedUser, setSelectedUser] = useState<UserDetail | null>(null);
     const [auditLogUser, setAuditLogUser] = useState<UserDetail | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [users, setUsers] = useState<UserDetail[]>([]);
-    const [showAddAdmin, setShowAddAdmin] = useState(false);
-    const [newAdmin, setNewAdmin] = useState({ name: '', email: '', password: '' });
-    const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
-    const [creationStatus, setCreationStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+    const [users, setUsers] = useState<UserDetail[]>([
+        {
+            id: 1,
+            name: "Alice Johnson",
+            email: "alice@example.com",
+            phone: "+91 99999 11111",
+            role: "Customer",
+            status: "Active",
+            joined: "Jan 2, 2026",
+            location: "Indiranagar, Bangalore",
+            totalSpent: "₹4,500",
+            bookingsCount: 12,
+            lastActive: "2 hours ago",
+            frequency: "4x/week",
+            favoriteGym: "Iron Pump Gym",
+            activePasses: ["Monthly Pro Pass", "Yoga Trial"],
+            interactionLogs: [
+                { date: "Jan 5, 2026", action: "Booked Session at Iron Pump", type: "success" },
+                { date: "Jan 2, 2026", action: "Subscription Renewed", type: "info" },
+                { date: "Dec 28, 2025", action: "Support: Refund Requested", type: "warning" }
+            ]
+        },
+        {
+            id: 2,
+            name: "Bob Smith",
+            email: "bob@gym.com",
+            phone: "+91 88888 22222",
+            role: "Gym Owner",
+            status: "Active",
+            joined: "Dec 15, 2025",
+            location: "Koramangala, Bangalore",
+            totalSpent: "₹0 (Owner)",
+            bookingsCount: 0,
+            lastActive: "5 mins ago",
+            frequency: "Daily",
+            favoriteGym: "Elite CrossFit",
+            activePasses: ["Partner Access"],
+            interactionLogs: [
+                { date: "Jan 6, 2026", action: "New Plan Added: Power Blast", type: "success" },
+                { date: "Jan 5, 2026", action: "Payout Processed: ₹24,000", type: "info" }
+            ]
+        },
+        {
+            id: 3,
+            name: "Charlie Brown",
+            email: "charlie@fit.com",
+            phone: "+91 77777 33333",
+            role: "Customer",
+            status: "Blocked",
+            joined: "Nov 20, 2025",
+            location: "Whitefield, Bangalore",
+            totalSpent: "₹1,200",
+            bookingsCount: 3,
+            lastActive: "1 month ago",
+            frequency: "Rarely",
+            favoriteGym: "Yoga Zen Center",
+            activePasses: [],
+            interactionLogs: [
+                { date: "Dec 20, 2025", action: "Account Blocked: Unpaid Dues", type: "warning" },
+                { date: "Dec 18, 2025", action: "Missed 3 Bookings consecutively", type: "warning" }
+            ]
+        },
+    ]);
 
-    const loadUsers = async () => {
-        setLoading(true);
-        try {
-            const [usersData, activitiesData] = await Promise.all([
-                fetchUsers(),
-                fetchActivities()
-            ]);
-
-            const mappedUsers = usersData.map((u: any) => {
-                const userActivities = activitiesData.filter((a: any) => a.userId?._id === u._id);
-
-                return {
-                    id: u._id,
-                    name: u.name || "Unnamed User",
-                    email: u.email,
-                    phone: u.phoneNumber || "Not Provided",
-                    role: u.role === 'owner' ? "Gym Owner" : u.role === 'admin' ? "Admin" : "Customer",
-                    status: "Active",
-                    joined: new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(u.createdAt)),
-                    location: u.location || "Unknown",
-                    totalSpent: u.totalSpent ? `₹${u.totalSpent.toLocaleString()}` : "₹0",
-                    bookingsCount: u.bookingsCount || 0,
-                    lastActive: u.lastActive ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(u.lastActive)) : "Never",
-                    frequency: "Regular",
-                    favoriteGym: "None",
-                    activePasses: [],
-                    interactionLogs: userActivities.length > 0
-                        ? userActivities.map((a: any) => ({
-                            date: new Date(a.createdAt).toLocaleDateString(),
-                            action: a.action,
-                            type: a.type
-                        }))
-                        : [{ date: "Sync", action: "Account synchronization successful", type: "success" }]
-                };
-            });
-            setUsers(mappedUsers);
-        } catch (error) {
-            console.error("Failed to fetch users:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        loadUsers();
-    }, []);
-
-    const handleBlockUnblock = (id: string) => {
+    const handleBlockUnblock = (id: number) => {
         setUsers(users.map(u =>
             u.id === id
                 ? { ...u, status: u.status === 'Blocked' ? 'Active' : 'Blocked' }
@@ -103,20 +112,6 @@ export function UserManagement() {
                     <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px] mt-1">Deep analytics on client behavior & account standing</p>
                 </div>
                 <div className="flex gap-4">
-                    <button
-                        onClick={loadUsers}
-                        className="p-4 bg-gray-100 hover:bg-gray-200 rounded-2xl transition-all"
-                        title="Refresh Users"
-                    >
-                        <Activity className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                    </button>
-                    <button
-                        onClick={() => setShowAddAdmin(true)}
-                        className="flex items-center gap-3 px-8 rounded-[28px] bg-black text-white font-black uppercase tracking-widest text-[10px] transition-all shadow-xl hover:bg-primary hover:text-black"
-                    >
-                        <ShieldAlert className="w-5 h-5 text-primary group-hover:text-black" />
-                        Provision Admin
-                    </button>
                     <div className="relative group w-full md:w-80">
                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-black transition-colors" />
                         <input
@@ -132,72 +127,65 @@ export function UserManagement() {
 
             {/* Quick Insights */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <UserInsight label="Total Active Clients" value={users.length.toString()} change="+0%" icon={Activity} />
+                <UserInsight label="Total Active Clients" value="4,281" change="+12%" icon={Activity} />
                 <UserInsight label="Churn Risk Level" value="low (2%)" change="-0.5%" icon={ShieldAlert} />
-                <UserInsight label="Avg. Order Value" value={`₹${users.length > 0 ? Math.round(users.reduce((acc, u) => acc + parseInt(u.totalSpent.replace(/[₹,]/g, '') || '0'), 0) / users.length).toLocaleString() : 0}`} change="+0%" icon={TrendingUp} />
+                <UserInsight label="Avg. Order Value" value="₹1,840" change="+4%" icon={TrendingUp} />
             </div>
 
             <div className="bg-white border border-gray-100 rounded-[48px] shadow-sm overflow-hidden">
-                {loading && users.length === 0 ? (
-                    <div className="p-20 text-center">
-                        <div className="w-12 h-12 border-4 border-black border-t-primary rounded-full animate-spin mx-auto mb-4" />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Syncing Client Identities...</p>
-                    </div>
-                ) : (
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100 italic">
-                                <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Identity HUB</th>
-                                <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Activity Level</th>
-                                <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Account status</th>
-                                <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 text-right">Ledger Detail</th>
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="bg-gray-50/50 border-b border-gray-100 italic">
+                            <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Identity HUB</th>
+                            <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Activity Level</th>
+                            <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Account status</th>
+                            <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 text-right">Ledger Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                        {filteredUsers.map((user) => (
+                            <tr key={user.id} className="hover:bg-gray-50/30 transition-all cursor-pointer group" onClick={() => setSelectedUser(user)}>
+                                <td className="p-10">
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-14 h-14 rounded-[24px] bg-black text-white flex items-center justify-center text-xl font-black italic shadow-lg group-hover:bg-primary transition-colors">
+                                            {user.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <div className="font-black text-gray-900 uppercase italic tracking-tighter text-lg">{user.name}</div>
+                                            <div className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">{user.email}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="p-10">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="p-2 bg-gray-50 rounded-lg">
+                                            <Dumbbell className="w-4 h-4 text-gray-900" />
+                                        </div>
+                                        <span className="text-xs font-black uppercase tracking-widest">{user.frequency}</span>
+                                    </div>
+                                    <p className="text-[10px] font-bold text-gray-400 px-1">{user.bookingsCount} TOTAL BOOKINGS</p>
+                                </td>
+                                <td className="p-10">
+                                    <span className={`px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border ${user.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                        user.status === 'Blocked' ? 'bg-red-50 text-red-600 border-red-100' :
+                                            'bg-yellow-50 text-yellow-600 border-yellow-100'
+                                        }`}>
+                                        {user.status}
+                                    </span>
+                                </td>
+                                <td className="p-10 text-right">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setSelectedUser(user); }}
+                                        className="p-4 bg-gray-50 hover:bg-black hover:text-white rounded-[20px] transition-all"
+                                        title="View Detailed Dossier"
+                                    >
+                                        <ChevronRight className="w-6 h-6" />
+                                    </button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {filteredUsers.map((user) => (
-                                <tr key={user.id} className="hover:bg-gray-50/30 transition-all cursor-pointer group" onClick={() => setSelectedUser(user)}>
-                                    <td className="p-10">
-                                        <div className="flex items-center gap-6">
-                                            <div className="w-14 h-14 rounded-[24px] bg-black text-white flex items-center justify-center text-xl font-black italic shadow-lg group-hover:bg-primary transition-colors">
-                                                {user.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <div className="font-black text-gray-900 uppercase italic tracking-tighter text-lg">{user.name}</div>
-                                                <div className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">{user.email}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-10">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <div className="p-2 bg-gray-50 rounded-lg">
-                                                <Dumbbell className="w-4 h-4 text-gray-900" />
-                                            </div>
-                                            <span className="text-xs font-black uppercase tracking-widest">{user.frequency}</span>
-                                        </div>
-                                        <p className="text-[10px] font-bold text-gray-400 px-1">{user.bookingsCount} TOTAL BOOKINGS</p>
-                                    </td>
-                                    <td className="p-10">
-                                        <span className={`px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border ${user.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                            user.status === 'Blocked' ? 'bg-red-50 text-red-600 border-red-100' :
-                                                'bg-yellow-50 text-yellow-600 border-yellow-100'
-                                            }`}>
-                                            {user.status}
-                                        </span>
-                                    </td>
-                                    <td className="p-10 text-right">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setSelectedUser(user); }}
-                                            className="p-4 bg-gray-50 hover:bg-black hover:text-white rounded-[20px] transition-all"
-                                            title="View Detailed Dossier"
-                                        >
-                                            <ChevronRight className="w-6 h-6" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
+                        ))}
+                    </tbody>
+                </table>
             </div>
 
             {/* Detailed User Dossier Modal */}
@@ -228,7 +216,7 @@ export function UserManagement() {
                                             {selectedUser.name.charAt(0)}
                                         </div>
                                         <h3 className="text-3xl font-black uppercase italic tracking-tighter">{selectedUser.name}</h3>
-                                        <p className="text-[10px] text-primary font-black uppercase tracking-[0.3em] mt-2">Dossier ID: {selectedUser.id}</p>
+                                        <p className="text-[10px] text-primary font-black uppercase tracking-[0.3em] mt-2">Dossier ID: #G-USR-{selectedUser.id}29</p>
                                     </div>
 
                                     <div className="space-y-6">
@@ -318,112 +306,6 @@ export function UserManagement() {
                                     </div>
                                 </section>
                             </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            {/* Create Admin Modal */}
-            <AnimatePresence>
-                {showAddAdmin && (
-                    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-                        <motion.div
-                            initial={{ opacity: 0, y: 50 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 50 }}
-                            className="bg-white w-full max-w-lg rounded-[48px] overflow-hidden shadow-2xl p-12 relative border border-gray-100"
-                        >
-                            <button
-                                onClick={() => {
-                                    setShowAddAdmin(false);
-                                    setCreationStatus(null);
-                                    setNewAdmin({ name: '', email: '', password: '' });
-                                }}
-                                title="Close"
-                                className="absolute top-8 right-8 p-3 hover:bg-gray-100 rounded-2xl transition-all"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-
-                            <div className="mb-10 text-center">
-                                <div className="w-16 h-16 bg-black rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-black/10">
-                                    <ShieldAlert className="text-primary w-8 h-8" />
-                                </div>
-                                <h3 className="text-3xl font-black italic uppercase tracking-tighter">Provision Admin</h3>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Grant High-Level System Command Access</p>
-                            </div>
-
-                            {creationStatus && (
-                                <div className={`mb-8 p-4 rounded-2xl border ${creationStatus.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-red-50 border-red-100 text-red-600'} text-[10px] font-black uppercase tracking-widest text-center`}>
-                                    {creationStatus.message}
-                                </div>
-                            )}
-
-                            <form className="space-y-6" onSubmit={async (e) => {
-                                e.preventDefault();
-                                setIsCreatingAdmin(true);
-                                setCreationStatus(null);
-                                try {
-                                    await createAdmin(newAdmin);
-                                    setCreationStatus({ type: 'success', message: 'ADMINISTRATOR PROVISIONED SUCCESSFULLY' });
-                                    setTimeout(() => {
-                                        setShowAddAdmin(false);
-                                        setCreationStatus(null);
-                                        setNewAdmin({ name: '', email: '', password: '' });
-                                        loadUsers();
-                                    }, 2000);
-                                } catch (err: any) {
-                                    setCreationStatus({ type: 'error', message: err.message || 'PROVISIONING FAILED' });
-                                } finally {
-                                    setIsCreatingAdmin(false);
-                                }
-                            }}>
-                                <div className="space-y-2">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Legal Identity Name</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold outline-none focus:border-black transition-all"
-                                        placeholder="EX: ROBERT J. OPPENHEIMER"
-                                        value={newAdmin.name}
-                                        onChange={(e) => setNewAdmin({ ...newAdmin, name: e.target.value })}
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Secure Gateway Email</label>
-                                    <input
-                                        type="email"
-                                        required
-                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold outline-none focus:border-black transition-all"
-                                        placeholder="ADMIN@GYMKAANA.COM"
-                                        value={newAdmin.email}
-                                        onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-4">Access Protocol Password</label>
-                                    <input
-                                        type="password"
-                                        required
-                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold outline-none focus:border-black transition-all"
-                                        placeholder="••••••••••••"
-                                        value={newAdmin.password}
-                                        onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
-                                    />
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={isCreatingAdmin}
-                                    className="w-full py-5 bg-black text-white rounded-3xl font-black text-xs uppercase tracking-[0.3em] shadow-xl shadow-black/20 hover:bg-primary hover:text-black transition-all active:scale-[0.98] mt-4 flex items-center justify-center"
-                                >
-                                    {isCreatingAdmin ? (
-                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    ) : 'INITIALIZE PROVISIONING'}
-                                </button>
-                            </form>
                         </motion.div>
                     </div>
                 )}

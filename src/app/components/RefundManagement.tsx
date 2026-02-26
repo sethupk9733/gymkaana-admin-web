@@ -1,94 +1,93 @@
-import { Search, DollarSign, Download, Filter, ArrowUpRight, ArrowDownRight, Printer, MoreHorizontal, Calendar, CreditCard, Wallet, Banknote, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Search, DollarSign, Download, Filter, ArrowUpRight, ArrowDownRight, Printer, MoreHorizontal, Calendar, CreditCard, Wallet, Banknote } from "lucide-react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { fetchAdminAccounting } from "../lib/api";
 
 interface Transaction {
     id: string;
     user: string;
     email: string;
     gym: string;
-    amount: any;
+    amount: string;
     date: string;
     time: string;
     status: 'Completed' | 'Refunded' | 'Pending' | 'Failed';
     type: string;
     method: 'UPI' | 'Card' | 'Wallet' | 'Net Banking';
-    commission: any;
-    netPayout: any;
-    cancellationReason?: string;
-    cancellationDate?: string;
-    refundDetails?: {
-        status: string;
-        amount: number;
-        processedAt: string;
-    };
+    commission: string;
+    netPayout: string;
 }
 
 export function RefundManagement() {
     const [searchQuery, setSearchQuery] = useState("");
     const [filterStatus, setFilterStatus] = useState("All");
     const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
-    const [data, setData] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const loadFinanceData = async () => {
-            try {
-                setLoading(true);
-                const result = await fetchAdminAccounting();
-                setData(result);
-            } catch (err: any) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadFinanceData();
-    }, []);
-
-    const transactions: Transaction[] = data?.transactions?.map((t: any) => ({
-        ...t,
-        amount: `₹${Number(t.amount).toLocaleString()}`,
-        commission: `₹${Number(t.commission).toLocaleString()}`,
-        netPayout: `₹${Number(t.netPayout).toLocaleString()}`
-    })) || [];
-
-    const stats = data?.stats || {
-        grossRevenue: 0,
-        totalCommission: 0,
-        totalRefunds: 0,
-        settledPayouts: 0
-    };
+    const transactions: Transaction[] = [
+        {
+            id: "TXN-8821901",
+            user: "Alice Johnson",
+            email: "alice@example.com",
+            gym: "Iron Pump Gym",
+            amount: "₹1,499.00",
+            date: "Jan 5, 2026",
+            time: "14:20 PM",
+            status: "Completed",
+            type: "Monthly Subscription",
+            method: "UPI",
+            commission: "₹224.85",
+            netPayout: "₹1,274.15"
+        },
+        {
+            id: "TXN-8821902",
+            user: "Bob Smith",
+            email: "bob@gym.com",
+            gym: "Elite CrossFit",
+            amount: "₹999.00",
+            date: "Jan 4, 2026",
+            time: "09:30 AM",
+            status: "Refunded",
+            type: "Single Entry Pass",
+            method: "Card",
+            commission: "₹149.85",
+            netPayout: "₹0.00"
+        },
+        {
+            id: "TXN-8821903",
+            user: "Charlie Brown",
+            email: "charlie@fit.com",
+            gym: "Yoga Zen Center",
+            amount: "₹499.00",
+            date: "Jan 3, 2026",
+            time: "18:45 PM",
+            status: "Pending",
+            type: "Trial Session",
+            method: "UPI",
+            commission: "₹74.85",
+            netPayout: "₹424.15"
+        },
+        {
+            id: "TXN-8821904",
+            user: "David Lee",
+            email: "david@lee.com",
+            gym: "Iron Pump Gym",
+            amount: "₹2,999.00",
+            date: "Jan 1, 2026",
+            time: "11:00 AM",
+            status: "Completed",
+            type: "Annual Plan",
+            method: "Net Banking",
+            commission: "₹449.85",
+            netPayout: "₹2,549.15"
+        },
+    ];
 
     const filteredTransactions = transactions.filter(txn => {
         const matchesSearch = txn.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
             txn.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
             txn.gym.toLowerCase().includes(searchQuery.toLowerCase());
-
-        const matchesFilter = filterStatus === "All"
-            ? true
-            : filterStatus === "Payouts"
-                ? txn.type === "Payout"
-                : txn.status === filterStatus;
-
+        const matchesFilter = filterStatus === "All" || txn.status === filterStatus;
         return matchesSearch && matchesFilter;
     });
-
-    const formatLakhs = (amt: number) => {
-        if (amt >= 100000) return `₹${(amt / 100000).toFixed(2)}L`;
-        return `₹${amt.toLocaleString()}`;
-    };
-
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-                <Loader2 className="w-12 h-12 text-primary animate-spin" />
-                <p className="text-xs font-black uppercase tracking-widest text-gray-400">Syncing Financial Ledger...</p>
-            </div>
-        );
-    }
 
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-12 pb-20">
@@ -109,10 +108,10 @@ export function RefundManagement() {
 
             {/* Platform Stats Summary */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <FinanceStat label="Gross Revenue" value={formatLakhs(stats.grossRevenue)} trend="+0%" sub="Live Network GMV" color="black" />
-                <FinanceStat label="Total Yield" value={formatLakhs(stats.totalCommission)} trend="+0%" sub="Platform (15%)" color="primary" />
-                <FinanceStat label="Total Refunds" value={formatLakhs(stats.totalRefunds)} trend="-0%" sub="User Reversals" color="red" />
-                <FinanceStat label="Settled Payouts" value={formatLakhs(stats.settledPayouts)} trend="+0%" sub="Paid to Gyms" color="emerald" />
+                <FinanceStat label="Gross Revenue" value="₹45.28L" trend="+8%" sub="MTD Performance" color="black" />
+                <FinanceStat label="Total Commission" value="₹6.79L" trend="+12%" sub="Platform Earnings" color="primary" />
+                <FinanceStat label="Total Refunds" value="₹12.5K" trend="-2%" sub="User Reversals" color="red" />
+                <FinanceStat label="Settled Payouts" value="₹38.4L" trend="+5%" sub="Paid to Gyms" color="emerald" />
             </div>
 
             {/* Custom Search & Filters */}
@@ -130,13 +129,13 @@ export function RefundManagement() {
                     </div>
 
                     <div className="flex items-center gap-3 overflow-x-auto pb-2 custom-scrollbar w-full lg:w-auto">
-                        {['All', 'Completed', 'Refunded', 'Pending', 'Failed', 'Payouts'].map(status => (
+                        {['All', 'Completed', 'Refunded', 'Pending', 'Failed'].map(status => (
                             <button
                                 key={status}
                                 onClick={() => setFilterStatus(status)}
                                 className={`px-6 py-3 rounded-full font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${filterStatus === status
-                                    ? 'bg-black text-white'
-                                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                                        ? 'bg-black text-white'
+                                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                                     }`}
                             >
                                 {status}
@@ -233,39 +232,6 @@ export function RefundManagement() {
                                         <SummaryItem label="Payment Info" value={selectedTxn.method} sub={selectedTxn.type} />
                                         <SummaryItem label="Timestamp" value={selectedTxn.date} sub={selectedTxn.time} />
                                     </div>
-
-                                    {selectedTxn.status === 'Refunded' && (
-                                        <div className="bg-red-50/50 p-8 rounded-[32px] border border-red-100/50 space-y-4">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
-                                                    <ArrowDownRight className="w-4 h-4 text-white" />
-                                                </div>
-                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-red-600">Cancellation Insight</h4>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-6">
-                                                <div>
-                                                    <p className="text-[9px] font-black text-red-300 uppercase tracking-widest mb-1">Reason for Reversal</p>
-                                                    <p className="text-sm font-bold text-red-900 italic">"{selectedTxn.cancellationReason || 'Standard User Cancellation'}"</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[9px] font-black text-red-300 uppercase tracking-widest mb-1">Refund Status</p>
-                                                    <p className="text-[10px] font-black text-red-600 bg-white border border-red-100 px-3 py-1 rounded-full inline-block uppercase tracking-widest">
-                                                        {selectedTxn.refundDetails?.status || 'Pending'}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[9px] font-black text-red-300 uppercase tracking-widest mb-1">Termination Date</p>
-                                                    <p className="text-xs font-bold text-red-900 uppercase">
-                                                        {selectedTxn.cancellationDate ? new Date(selectedTxn.cancellationDate).toLocaleDateString() : selectedTxn.date}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[9px] font-black text-red-300 uppercase tracking-widest mb-1">Reversal Amount</p>
-                                                    <p className="text-sm font-black text-red-600 italic">₹{selectedTxn.refundDetails?.amount || selectedTxn.amount.replace('₹', '')}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
 
                                     <div className="p-8 bg-black text-white rounded-[32px] space-y-4">
                                         <div className="flex justify-between items-center text-white/40 font-black text-[10px] uppercase tracking-widest border-b border-white/5 pb-4">

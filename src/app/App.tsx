@@ -1,85 +1,22 @@
-import { useState, useEffect } from 'react';
-import { Home, Building2, Users, DollarSign, LogOut, Settings as SettingsIcon, Megaphone, Calendar, MessageCircle, Star } from 'lucide-react';
+import { useState } from 'react';
+import { Home, Building2, Users, DollarSign, LogOut, Settings as SettingsIcon, Megaphone } from 'lucide-react';
 import { AdminDashboard } from './components/AdminDashboard';
 import { PartnerManagement } from './components/PartnerManagement';
 import { UserManagement } from './components/UserManagement';
 import { RefundManagement } from './components/RefundManagement';
 import { Promotions } from './components/Promotions';
 import { Settings } from './components/Settings';
-import { BookingManagement } from './components/BookingManagement';
-import { SupportTickets } from './components/SupportTickets';
-import { AdminLogin } from './components/AdminLogin';
-import { ReviewManagement } from './components/ReviewManagement';
-import { logout, getUnreadTicketCount, checkSession } from './lib/api';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState('dashboard');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const init = async () => {
-      console.log('🛡️ CMD CENTER: Initiating Security Protocol...');
-      try {
-        const user = await checkSession();
-        console.log('🛡️ CMD CENTER: Session Scan Result:', user ? 'Authenticated' : 'Guest');
-
-        if (user && user.roles?.includes('admin')) {
-          console.log('🛡️ CMD CENTER: Admin Clearance Granted');
-          setIsAuthenticated(true);
-        } else if (user) {
-          console.log('🛡️ CMD CENTER: Access Denied - Insufficient Privileges');
-        }
-      } catch (error) {
-        console.error('🛡️ CMD CENTER: Initialization Critical Failure:', error);
-      } finally {
-        console.log('🛡️ CMD CENTER: Startup Sequence Complete');
-        setLoading(false);
-      }
-    };
-    init();
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchUnreadCount();
-      const interval = setInterval(fetchUnreadCount, 15000);
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated]);
-
-  if (loading) return <div className="h-screen flex items-center justify-center bg-black text-primary font-black animate-pulse">GYMKAANA CMD CENTER INITIALIZING...</div>;
-
-  const fetchUnreadCount = async () => {
-    if (!isAuthenticated) return;
-    try {
-      const data = await getUnreadTicketCount();
-      setUnreadCount(data.count);
-    } catch (error) {
-      console.error('Failed to fetch unread count:', error);
-    }
-  };
-
-  const handleLogout = () => {
-    logout();
-    setIsAuthenticated(false);
-  };
-
-  if (!isAuthenticated) {
-    return <AdminLogin onLogin={() => setIsAuthenticated(true)} />;
-  }
 
   const renderContent = () => {
     switch (currentTab) {
-      case 'dashboard': return <AdminDashboard onTabChange={setCurrentTab} />;
+      case 'dashboard': return <AdminDashboard />;
       case 'partners': return <PartnerManagement />;
       case 'users': return <UserManagement />;
-      case 'bookings': return <BookingManagement />;
       case 'refunds': return <RefundManagement />;
       case 'promotions': return <Promotions />;
-      case 'support': return <SupportTickets />;
-      case 'reviews': return <ReviewManagement />;
       case 'settings': return <Settings />;
       default: return <AdminDashboard />;
     }
@@ -89,48 +26,22 @@ export default function App() {
     <div className="flex h-screen bg-gray-50 text-gray-900 font-sans">
       {/* Sidebar */}
       <aside className="w-64 bg-black text-white flex flex-col shrink-0">
-        <div className="p-8 -skew-x-12">
-          <h1 className="text-2xl font-[1000] tracking-[-0.08em] uppercase flex flex-col">
-            <div className="flex items-center">
-              <span className="text-white">GYM</span>
-              <span className="text-primary italic ml-0.5">KAA</span>
-              <span className="text-white">NA</span>
-            </div>
-            <span className="block text-[10px] not-italic font-black tracking-[0.3em] text-primary mt-2 uppercase">Command Center</span>
-          </h1>
+        <div className="p-8">
+          <h1 className="text-2xl font-black italic uppercase tracking-tighter">Gymkaana <span className="block text-[10px] not-italic font-black tracking-[0.3em] text-[#A3E635] mt-2 uppercase">Command Center</span></h1>
         </div>
 
         <nav className="flex-1 px-4 space-y-2">
           <NavItem icon={Home} label="Dashboard" active={currentTab === 'dashboard'} onClick={() => setCurrentTab('dashboard')} />
           <NavItem icon={Building2} label="Gym Approvals" active={currentTab === 'partners'} onClick={() => setCurrentTab('partners')} />
           <NavItem icon={Users} label="User Management" active={currentTab === 'users'} onClick={() => setCurrentTab('users')} />
-          <NavItem icon={Calendar} label="Bookings Matrix" active={currentTab === 'bookings'} onClick={() => setCurrentTab('bookings')} />
           <NavItem icon={DollarSign} label="Refunds & Finance" active={currentTab === 'refunds'} onClick={() => setCurrentTab('refunds')} />
           <NavItem icon={Megaphone} label="Promotions" active={currentTab === 'promotions'} onClick={() => setCurrentTab('promotions')} />
-          <NavItem
-            icon={MessageCircle}
-            label="Support Tickets"
-            active={currentTab === 'support'}
-            onClick={() => setCurrentTab('support')}
-            badge={unreadCount > 0 ? unreadCount : undefined}
-          />
-          <NavItem
-            icon={Star}
-            label="User Reviews"
-            active={currentTab === 'reviews'}
-            onClick={() => setCurrentTab('reviews')}
-          />
           <NavItem icon={SettingsIcon} label="Settings" active={currentTab === 'settings'} onClick={() => setCurrentTab('settings')} />
         </nav>
 
-        <div className="p-4 border-t border-white/5 mt-auto">
-          <div className="px-3 py-4 text-left">
-            <p className="text-[8px] font-black text-white/20 uppercase tracking-[0.3em] leading-relaxed">
-              © {new Date().getFullYear()} VUEGAM SOLUTIONS.<br />ALL RIGHTS RESERVED.
-            </p>
-          </div>
-          <button onClick={handleLogout} className="flex items-center gap-3 text-white/40 hover:text-white transition-all w-full p-3.5 rounded-xl font-black text-xs uppercase tracking-widest mt-2 hover:bg-white/5">
-            <LogOut className="w-5 h-5 text-primary/60" />
+        <div className="p-4 border-t border-gray-800 space-y-2">
+          <button className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors w-full p-3 rounded-xl font-bold text-sm">
+            <LogOut className="w-5 h-5" />
             <span>Logout</span>
           </button>
         </div>
@@ -144,22 +55,17 @@ export default function App() {
   );
 }
 
-function NavItem({ icon: Icon, label, active, onClick, badge }: any) {
+function NavItem({ icon: Icon, label, active, onClick }: any) {
   return (
     <button
       onClick={onClick}
       className={`flex items-center gap-3 w-full p-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${active
-        ? 'bg-primary text-black shadow-2xl shadow-primary/20 scale-[1.02]'
-        : 'text-white/40 hover:bg-white/10 hover:text-white'
+          ? 'bg-[#A3E635] text-black shadow-2xl shadow-[#A3E635]/20 scale-[1.02]'
+          : 'text-white/40 hover:bg-white/10 hover:text-white'
         }`}
     >
-      <Icon className={`w-5 h-5 ${active ? 'text-black' : 'text-primary/60'}`} />
-      <span className="flex-1 text-left">{label}</span>
-      {badge && (
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-          {badge > 9 ? '9+' : badge}
-        </span>
-      )}
+      <Icon className={`w-5 h-5 ${active ? 'text-black' : 'text-[#A3E635]/60'}`} />
+      {label}
     </button>
   )
 }

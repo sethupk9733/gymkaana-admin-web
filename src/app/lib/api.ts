@@ -19,7 +19,15 @@ export const login = async (credentials: any) => {
         body: JSON.stringify(credentials),
         //@ts-ignore
         credentials: 'include'
-    });
+    });    if (!response.ok) {
+        const error = await response.text();
+        console.error('Register API Error:', response.status, error);
+        throw new Error(`API Error: ${response.status}`);
+    }    if (!response.ok) {
+        const error = await response.text();
+        console.error('Login API Error:', response.status, error);
+        throw new Error(`API Error: ${response.status}`);
+    }
     const data = await response.json();
     if (data.accessToken) {
         setToken(data.accessToken);
@@ -85,6 +93,11 @@ export const googleLogin = async (googleData: { idToken: string; role?: string }
         //@ts-ignore
         credentials: 'include'
     });
+    if (!response.ok) {
+        const error = await response.text();
+        console.error('Google Login API Error:', response.status, error);
+        throw new Error(`API Error: ${response.status}`);
+    }
     const data = await response.json();
     if (data.accessToken) {
         setToken(data.accessToken);
